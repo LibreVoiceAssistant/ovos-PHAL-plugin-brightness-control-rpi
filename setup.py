@@ -11,7 +11,7 @@ setup(
     author='AIIX',
     author_email='aix.m@outlook.com',
     license='Apache-2.0',
-    packages=['ovos_PHAL_plugin_brightness_control-rpi'],
+    packages=['ovos_PHAL_plugin_brightness_control_rpi'],
     install_requires=["ovos-plugin-manager>=0.0.1"],
     zip_safe=True,
     classifiers=[
