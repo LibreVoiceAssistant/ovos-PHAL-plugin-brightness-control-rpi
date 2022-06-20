@@ -24,7 +24,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-brightness-control-rpi", config=config)
         self.bus = bus
-        self.device_interface = None
+        self.device_interface = "DSI"
         self.ddcutil_detected_bus = None
         self.ddcutil_brightness_code = None
 
@@ -36,37 +36,42 @@ class BrightnessControlRPIPlugin(PHALPlugin):
 
     # Discover the brightness control device interface (HDMI / DSI) on the Raspberry PI
     def discover(self):
-        LOG.info("Discovering brightness control device interface")
-        proc = subprocess.Popen(["/opt/vc/bin/vcgencmd",
-                                "get_config", "display_default_lcd"], stdout=subprocess.PIPE)
-        if proc.stdout.read().decode("utf-8").strip() == "1":
-            self.device_interface = "DSI"
-        else:
-            self.device_interface = "HDMI"
-        LOG.info("Brightness control device interface is {}".format(
-            self.device_interface))
-
-        if self.device_interface == "HDMI":
-            proc_detect = subprocess.Popen(
-                ["/usr/bin/ddcutil", "detect"], stdout=subprocess.PIPE)
-
-            ddcutil_detected_output = proc_detect.stdout.read().decode("utf-8")
-            if "I2C bus:" in ddcutil_detected_output:
-                bus_code = ddcutil_detected_output.split(
-                    "I2C bus: ")[1].strip().split("\n")[0]
-                self.ddcutil_detected_bus = bus_code.split("-")[1].strip()
+        try:
+            LOG.info("Discovering brightness control device interface")
+            proc = subprocess.Popen(["/opt/vc/bin/vcgencmd",
+                                    "get_config", "display_default_lcd"], stdout=subprocess.PIPE)
+            if proc.stdout.read().decode("utf-8").strip() == "1":
+                self.device_interface = "DSI"
             else:
-                ddcutil_detected_bus = None
-                LOG.error("Display is not detected by DDCUTIL")
+                self.device_interface = "HDMI"
+            LOG.info("Brightness control device interface is {}".format(
+                self.device_interface))
 
-            if self.ddcutil_detected_bus:
-                proc_fetch_vcp = subprocess.Popen(
-                    ["/usr/bin/ddcutil", "getvcp", "known", "--bus", self.ddcutil_detected_bus], stdout=subprocess.PIPE)
-                # check the vcp output for the Brightness string and get its VCP code
-                for line in proc_fetch_vcp.stdout:
-                    if "Brightness" in line.decode("utf-8"):
-                        self.ddcutil_brightness_code = line.decode(
-                            "utf-8").split(" ")[2].strip()
+            if self.device_interface == "HDMI":
+                proc_detect = subprocess.Popen(
+                    ["/usr/bin/ddcutil", "detect"], stdout=subprocess.PIPE)
+
+                ddcutil_detected_output = proc_detect.stdout.read().decode("utf-8")
+                if "I2C bus:" in ddcutil_detected_output:
+                    bus_code = ddcutil_detected_output.split(
+                        "I2C bus: ")[1].strip().split("\n")[0]
+                    self.ddcutil_detected_bus = bus_code.split("-")[1].strip()
+                else:
+                    ddcutil_detected_bus = None
+                    LOG.error("Display is not detected by DDCUTIL")
+
+                if self.ddcutil_detected_bus:
+                    proc_fetch_vcp = subprocess.Popen(
+                        ["/usr/bin/ddcutil", "getvcp", "known", "--bus", self.ddcutil_detected_bus], stdout=subprocess.PIPE)
+                    # check the vcp output for the Brightness string and get its VCP code
+                    for line in proc_fetch_vcp.stdout:
+                        if "Brightness" in line.decode("utf-8"):
+                            self.ddcutil_brightness_code = line.decode(
+                                "utf-8").split(" ")[2].strip()
+        except Exception as e:
+            LOG.error(e)
+            LOG.info("Falling back to DSI interface")
+            self.device_interface = "DSI"
 
     # Get the current brightness level
     def get_brightness(self):
