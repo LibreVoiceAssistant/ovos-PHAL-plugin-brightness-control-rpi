@@ -14,6 +14,7 @@
 #
 
 import subprocess
+import math
 
 from ovos_utils.log import LOG
 from mycroft_bus_client import Message
@@ -120,6 +121,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
         LOG.info("Setting brightness level from bus")
         level = message.data["brightness"]
         if self.device_interface == "HDMI":
+            level = 100 * level           
             if level < 0:
                 level = 0
             elif level > 100:
@@ -130,12 +132,12 @@ class BrightnessControlRPIPlugin(PHALPlugin):
             self.set_brightness(level)
 
         if self.device_interface == "DSI":
+            level = 255 * level
             if level < 0:
                 level = 0
             elif level > 255:
                 level = 255
             else:
-                # round the level to the nearest 10
                 level = round(level / 10) * 10
 
             self.set_brightness(level)
