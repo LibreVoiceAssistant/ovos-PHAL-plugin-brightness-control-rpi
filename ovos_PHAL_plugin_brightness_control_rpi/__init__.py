@@ -13,12 +13,17 @@
 # limitations under the License.
 #
 
-import subprocess
 import math
+import time
+import subprocess
+import threading
+from os.path import exists, join
 
-from ovos_utils.log import LOG
+from json_database import JsonStorage
 from mycroft_bus_client import Message
 from ovos_plugin_manager.phal import PHALPlugin
+from ovos_utils.log import LOG
+from ovos_utils.xdg_utils import xdg_config_home
 
 
 class BrightnessControlRPIPlugin(PHALPlugin):
@@ -28,12 +33,41 @@ class BrightnessControlRPIPlugin(PHALPlugin):
         self.device_interface = "DSI"
         self.ddcutil_detected_bus = None
         self.ddcutil_brightness_code = None
+        self.auto_dim_enabled = False
+        self.timer_thread = None
 
+        self.is_auto_dim_enabled()
         self.discover()
 
         self.bus.on("phal.brightness.control.get",
                     self.query_current_brightness)
-        self.bus.on("phal.brightness.control.set", self.set_brightness)
+        self.bus.on("phal.brightness.control.set",
+                    self.set_brightness_from_bus)
+        self.bus.on("speaker.extension.display.auto.dim.changed", 
+                    self.is_auto_dim_enabled)
+        self.bus.on("gui.page_interaction",
+                    self.undim_display)
+        self.bus.on("gui.page_gained_focus",
+                    self.undim_display)
+        self.bus.on("recognizer_loop:wakeword",
+                    self.undim_display)
+        self.bus.on("recognizer_loop:record_begin",
+                    self.undim_display)
+
+    # Check if the auto dim is enabled
+    def is_auto_dim_enabled(self, message=None):
+        LOG.info("Checking if auto dim is enabled")
+        display_config_path_local = join(xdg_config_home(), "OvosDisplay.conf")
+        if exists(display_config_path_local):
+            display_configuration = JsonStorage(display_config_path_local)
+            self.auto_dim_enabled = display_configuration.get("auto_dim", False)
+        else:
+            self.auto_dim_enabled = False
+
+        if self.auto_dim_enabled:
+            self.start_auto_dim()
+        else:
+            self.stop_auto_dim()
 
     # Discover the brightness control device interface (HDMI / DSI) on the Raspberry PI
     def discover(self):
@@ -105,7 +139,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
 
     # Set the brightness level
     def set_brightness(self, level):
-        LOG.info("Setting brightness level")
+        LOG.debug("Setting brightness level")
         if self.device_interface == "HDMI":
             subprocess.Popen(["/usr/bin/ddcutil", "setvcp", self.ddcutil_brightness_code,
                              "--bus", self.ddcutil_detected_bus, "--value", str(level)])
@@ -113,31 +147,71 @@ class BrightnessControlRPIPlugin(PHALPlugin):
             subprocess.Popen(
                 ["echo", str(level), ">", "/sys/class/backlight/rpi_backlight/brightness"])
 
-        self.bus.emit(
-            Message("phal.brightness.control.changed", {"brightness": level}))
         LOG.info("Brightness level set to {}".format(level))
 
     def set_brightness_from_bus(self, message):
-        LOG.info("Setting brightness level from bus")
-        level = message.data["brightness"]
-        if self.device_interface == "HDMI":
-            level = 100 * level           
-            if level < 0:
-                level = 0
-            elif level > 100:
-                level = 100
-            else:
-                level = round(level / 10) * 10
+        LOG.debug("Setting brightness level from bus")
+        level = message.data.get("brightness", "")
 
-            self.set_brightness(level)
+        if self.device_interface == "HDMI":
+            percent_level = 100 * float(level)
+            if level < 0:
+                apply_level = 0
+            elif level > 100:
+                apply_level = 100
+            else:
+                apply_level = round(percent_level / 10) * 10
+
+            self.set_brightness(apply_level)
 
         if self.device_interface == "DSI":
-            level = 255 * level
+            percent_level = 255 * float(level)
             if level < 0:
-                level = 0
+                apply_level = 0
             elif level > 255:
-                level = 255
+                apply_level = 255
             else:
-                level = round(level / 10) * 10
+                apply_level = round(percent_level / 10) * 10
+            
+            self.set_brightness(apply_level)
+            
+    def start_auto_dim(self):
+        LOG.debug("Starting auto dim")
+        self.timer_thread = threading.Thread(target=self.auto_dim_timer)
+        self.timer_thread.start()
+    
+    def auto_dim_timer(self):
+        while self.auto_dim_enabled:
+            time.sleep(60)
+            LOG.debug("Adjusting brightness automatically")
+            if self.device_interface == "HDMI":
+                current_brightness = 100
+            if self.device_interface == "DSI":
+                current_brightness = 255
+                
+            self.bus.emit(Message("phal.brightness.control.auto.dim.update", {"brightness": current_brightness * 0.2}))
+            self.set_brightness(current_brightness * 0.2)
 
-            self.set_brightness(level)
+    def stop_auto_dim(self):
+        LOG.debug("Stopping Auto Dim")
+        self.auto_dim_enabled = False
+        if self.timer_thread:
+            self.timer_thread.join()
+            
+    def restart_auto_dim(self):
+        LOG.debug("Restarting Auto Dim")
+        self.stop_auto_dim()
+        self.auto_dim_enabled = True
+        self.start_auto_dim()
+            
+    def undim_display(self, message=None):
+        if self.auto_dim_enabled:
+            LOG.debug("Undimming display on interaction")
+            if self.device_interface == "HDMI":
+                self.set_brightness(100)
+            if self.device_interface == "DSI":
+                self.set_brightness(255)
+            self.bus.emit(Message("phal.brightness.control.auto.dim.update", {"brightness": "100"}))
+            self.restart_auto_dim()
+        else:
+            pass
