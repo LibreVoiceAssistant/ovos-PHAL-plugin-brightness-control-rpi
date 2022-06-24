@@ -144,8 +144,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
             subprocess.Popen(["/usr/bin/ddcutil", "setvcp", self.ddcutil_brightness_code,
                              "--bus", self.ddcutil_detected_bus, "--value", str(level)])
         elif self.device_interface == "DSI":
-            subprocess.Popen(
-                ["echo", str(level), ">", "/sys/class/backlight/rpi_backlight/brightness"])
+            subprocess.call(f"echo {level} > /sys/class/backlight/rpi_backlight/brightness", shell=True)
 
         LOG.info("Brightness level set to {}".format(level))
 
