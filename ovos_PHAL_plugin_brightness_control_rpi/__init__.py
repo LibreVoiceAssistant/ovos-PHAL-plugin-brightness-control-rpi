@@ -188,8 +188,8 @@ class BrightnessControlRPIPlugin(PHALPlugin):
             if self.device_interface == "DSI":
                 current_brightness = 255
                 
-            self.bus.emit(Message("phal.brightness.control.auto.dim.update", {"brightness": current_brightness * 0.2}))
-            self.set_brightness(current_brightness * 0.2)
+            self.bus.emit(Message("phal.brightness.control.auto.dim.update", {"brightness": 20}))
+            self.set_brightness(20)
 
     def stop_auto_dim(self):
         LOG.debug("Stopping Auto Dim")
