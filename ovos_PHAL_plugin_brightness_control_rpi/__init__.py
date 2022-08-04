@@ -142,7 +142,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
         LOG.debug("Setting brightness level")
         if self.device_interface == "HDMI":
             subprocess.Popen(["/usr/bin/ddcutil", "setvcp", self.ddcutil_brightness_code,
-                             "--bus", self.ddcutil_detected_bus, "--value", str(level)])
+                             "--bus", self.ddcutil_detected_bus, str(level)])
         elif self.device_interface == "DSI":
             subprocess.call(f"echo {level} > /sys/class/backlight/rpi_backlight/brightness", shell=True)
 
@@ -154,9 +154,9 @@ class BrightnessControlRPIPlugin(PHALPlugin):
 
         if self.device_interface == "HDMI":
             percent_level = 100 * float(level)
-            if level < 0:
+            if float(level) < 0:
                 apply_level = 0
-            elif level > 100:
+            elif float(level) > 100:
                 apply_level = 100
             else:
                 apply_level = round(percent_level / 10) * 10
@@ -165,9 +165,9 @@ class BrightnessControlRPIPlugin(PHALPlugin):
 
         if self.device_interface == "DSI":
             percent_level = 255 * float(level)
-            if level < 0:
+            if float(level) < 0:
                 apply_level = 0
-            elif level > 255:
+            elif float(level) > 255:
                 apply_level = 255
             else:
                 apply_level = round(percent_level / 10) * 10
