@@ -1,20 +1,20 @@
 # Changelog
 
-## [Unreleased](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/HEAD)
+## [V1.0.0a3](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/V1.0.0a3) (2022-08-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/V1.0.0a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/V1.0.0a2...V1.0.0a3)
 
 **Merged pull requests:**
 
 - Add auto night mode support [\#2](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/pull/2) ([AIIX](https://github.com/AIIX))
 
-## [V1.0.0a1](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/V1.0.0a1) (2022-08-10)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/V1.0.0a2...V1.0.0a1)
-
 ## [V1.0.0a2](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/V1.0.0a2) (2022-08-10)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/ffda1366b0bc5dda9970eb4de4bb118406b80e4f...V1.0.0a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/V1.0.0a1...V1.0.0a2)
+
+## [V1.0.0a1](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/V1.0.0a1) (2022-08-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/ffda1366b0bc5dda9970eb4de4bb118406b80e4f...V1.0.0a1)
 
 **Merged pull requests:**
 
