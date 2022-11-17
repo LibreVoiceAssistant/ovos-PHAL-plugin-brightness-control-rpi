@@ -1,5 +1,9 @@
 # Changelog
 
+## [V1.0.0a4](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/V1.0.0a4) (2022-10-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/V1.0.0a3...V1.0.0a4)
+
 ## [V1.0.0a3](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/tree/V1.0.0a3) (2022-08-11)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi/compare/V1.0.0a2...V1.0.0a3)
