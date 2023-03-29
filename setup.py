@@ -38,7 +38,7 @@ def required(requirements_file):
         return [pkg for pkg in requirements
                 if pkg.strip() and not pkg.startswith("#")]
 
-PLUGIN_ENTRY_POINT = 'ovos-PHAL-plugin-brightness-control-rpi=ovos_PHAL_plugin_brightness_control_rpi:BrightnessControlRPIPlugin'
+ADMIN_PLUGIN_ENTRY_POINT = 'ovos-PHAL-plugin-brightness-control-rpi=ovos_PHAL_plugin_brightness_control_rpi:BrightnessControlRPIPlugin'
 setup(
     name='ovos-PHAL-plugin-brightness-control-rpi',
     version=get_version(),
@@ -58,5 +58,5 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    entry_points={'ovos.plugin.phal': PLUGIN_ENTRY_POINT}
+    entry_points={'ovos.plugin.phal.admin': ADMIN_PLUGIN_ENTRY_POINT}
 )
