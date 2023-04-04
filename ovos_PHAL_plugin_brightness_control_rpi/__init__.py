@@ -14,10 +14,12 @@
 #
 
 import datetime
+import platform
 import subprocess
 import threading
 import time
-from os.path import exists, join
+from distutils.spawn import find_executable
+from os.path import exists, join, isfile
 
 import requests
 from json_database import JsonStorage
@@ -27,7 +29,20 @@ from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_config_home
 
 
+class BrightnessControlRPIPValidator:
+    @staticmethod
+    def validate(config=None):
+        if not platform.machine().startswith("arm"):
+            return False
+        # check if needed utils installed
+        vcgencmd = find_executable("vcgencmd") or isfile("/opt/vc/bin/vcgencmd")
+        ddcutil = find_executable("ddcutil") or isfile("/usr/bin/ddcutil")
+        return vcgencmd or ddcutil
+
+
 class BrightnessControlRPIPlugin(PHALPlugin):
+    validator = BrightnessControlRPIPValidator
+
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-brightness-control-rpi", config=config)
         self.bus = bus
@@ -90,7 +105,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
         try:
             LOG.info("Discovering brightness control device interface")
             proc = subprocess.Popen(["/opt/vc/bin/vcgencmd",
-                                    "get_config", "display_default_lcd"], stdout=subprocess.PIPE)
+                                     "get_config", "display_default_lcd"], stdout=subprocess.PIPE)
             if proc.stdout.read().decode("utf-8").strip() == "1":
                 self.device_interface = "DSI"
             else:
@@ -113,7 +128,8 @@ class BrightnessControlRPIPlugin(PHALPlugin):
 
                 if self.ddcutil_detected_bus:
                     proc_fetch_vcp = subprocess.Popen(
-                        ["/usr/bin/ddcutil", "getvcp", "known", "--bus", self.ddcutil_detected_bus], stdout=subprocess.PIPE)
+                        ["/usr/bin/ddcutil", "getvcp", "known", "--bus", self.ddcutil_detected_bus],
+                        stdout=subprocess.PIPE)
                     # check the vcp output for the Brightness string and get its VCP code
                     for line in proc_fetch_vcp.stdout:
                         if "Brightness" in line.decode("utf-8"):
@@ -129,7 +145,8 @@ class BrightnessControlRPIPlugin(PHALPlugin):
         LOG.info("Getting current brightness level")
         if self.device_interface == "HDMI":
             proc_fetch_vcp = subprocess.Popen(
-                ["/usr/bin/ddcutil", "getvcp", self.ddcutil_brightness_code, "--bus", self.ddcutil_detected_bus], stdout=subprocess.PIPE)
+                ["/usr/bin/ddcutil", "getvcp", self.ddcutil_brightness_code, "--bus", self.ddcutil_detected_bus],
+                stdout=subprocess.PIPE)
             for line in proc_fetch_vcp.stdout:
                 if "current value" in line.decode("utf-8"):
                     brightness_level = line.decode(
@@ -158,7 +175,7 @@ class BrightnessControlRPIPlugin(PHALPlugin):
         LOG.debug("Setting brightness level")
         if self.device_interface == "HDMI":
             subprocess.Popen(["/usr/bin/ddcutil", "setvcp", self.ddcutil_brightness_code,
-                             "--bus", self.ddcutil_detected_bus, str(level)])
+                              "--bus", self.ddcutil_detected_bus, str(level)])
         elif self.device_interface == "DSI":
             subprocess.call(
                 f"echo {level} > /sys/class/backlight/rpi_backlight/brightness", shell=True)
