@@ -41,6 +41,8 @@ class BrightnessControlRPIPValidator:
 
 
 class BrightnessControlRPIPlugin(PHALPlugin):
+    validator = BrightnessControlRPIPValidator
+
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-brightness-control-rpi", config=config)
         self.bus = bus
