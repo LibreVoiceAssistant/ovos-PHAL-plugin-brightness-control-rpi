@@ -1,5 +1,9 @@
-# OVOS PHAL BRIGHTNESS CONTROL PLUGIN FOR RPI
+# DEPRECATED - OVOS PHAL BRIGHTNESS CONTROL PLUGIN FOR RPI
 
+
+This repository is no longer maintained by OpenVoiceOS, use https://github.com/OpenVoiceOS/ovos-gui-plugin-shell-companion instead
+
+___________________________
 This plugin provides a brightness control interface for the Raspberry PI, it supports DSI and **HDMI screens
 
 ** HDMI Screens: Screens supported and detected by DDCUTILS only
